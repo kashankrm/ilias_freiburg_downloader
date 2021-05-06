@@ -1,0 +1,4 @@
+.vscode/*
+passwd.json
+geckodriver.log
+__pycache__
