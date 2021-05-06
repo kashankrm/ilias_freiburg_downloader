@@ -1,0 +1,154 @@
+from selenium import webdriver
+import warnings
+import json
+import time
+import os
+
+from course import Course
+from webelement import CustomDriver
+
+if os.path.exists("config.json"):
+
+    with open("config.json") as f:
+
+        config = json.load(f)
+
+else:
+
+    config = {}
+
+class Login:
+
+    def __init__(self):
+
+        self.ilias_link = "https://ilias.uni-freiburg.de"
+
+        self.gecko_path = "E:\\geckodriver.exe"
+
+        self.course_list = []
+
+        self.config = {}
+
+        self.config["interested_course"] = "Electronic Markets 2021"
+
+        self.retries = 10
+
+        self.driver = CustomDriver(webdriver.Firefox(executable_path=self.gecko_path),self.retries)
+        
+    def start(self):
+
+        self.load_passwd()
+
+        self.driver.get(self.ilias_link)
+
+        self.authenticate()
+        return
+        
+
+    def authenticate(self):
+
+        clickbtn = self.find_login_btn()
+                                     
+        clickbtn.click()
+
+        time.sleep(1)
+
+        username_field = self.get_element('//*[@id="LoginForm_username"]')
+
+        username_field.send_keys(self.user_auth["username"])
+
+        password_field = self.get_element('//*[@id="LoginForm_password"]')
+
+        password_field.send_keys(self.user_auth["password"])
+
+        self.get_element('/html/body/div/div[3]/div[5]/div/div/form/div[3]/input').click()
+
+        time.sleep(2)
+
+
+    def find_login_btn(self):
+        try:
+            
+            a_tags = self.driver.find_elements_by_tag_name("a")
+            a_tags = [a for a in a_tags if "shib_login.php?target=" in a.get_attribute("href")  ]
+            return a_tags[0]
+            
+        except:
+            warnings.warn("could not find xpath of login button, trying search in a tags")
+            login_btn = self.get_element("/html/body/div[4]/div/div/div[4]/div/div/div/div[2]/div[2]/div[1]/div/div[2]/div/form/div[2]/div/p/a")
+            return login_btn
+    def load_courses(self):
+
+        course_list_obj = self.get_elements("/html/body/div[3]/div/div/div[5]/div/div/div/div[3]/div[3]/div/div[1]/div/div/*")
+
+        self.course_list = []
+
+        for course in course_list_obj:
+
+            if course.get_attribute("class") == "ilObjListRow":
+
+                self.course_list.append(Course(course))
+
+        print([c.course_name for c in self.course_list])
+        
+        print("done")
+        # course_list_tags = [a for a in a_tags if a.get_attribute("class") == "il_ContainerItemTitle"]
+
+        # course_list = []
+
+        # for a in course_list_tags:
+
+        #     course_list.append(Course(a))
+
+
+    def get_element(self, xpath):
+        return self.driver.find_element_by_xpath(xpath)
+    
+    def get_elements(self, xpath):
+        return self.driver.find_elements_by_xpath(xpath)
+        
+    def load_passwd(self):
+
+        with open("passwd.json") as f:
+
+            self.user_auth = json.load(f)
+        
+
+
+
+
+
+def update_config(config):
+
+    with open("config.json") as f:
+
+        json.dump(config, f)
+
+
+
+
+if __name__ == "__main__":
+
+    login = Login()
+    login.start()
+    login.load_courses()
+
+config["interested_course"] = "Electronic Markets 2021"
+
+
+
+a_tags = driver.find_elements_by_tag_name("a")
+
+course_list = [a for a in a_tags if a.get_attribute("class") == "il_ContainerItemTitle"]
+
+course_name = [a.get_attribute('innerHTML') for a in course_list]
+
+config["available_courses"] = course_name
+update_config(config)
+
+interested_course = config["interested_course"]
+
+username_field.get_property(name)
+
+print("done")
+
