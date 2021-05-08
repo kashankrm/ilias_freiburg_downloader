@@ -8,7 +8,7 @@ class ElementParser:
         attr = super().__getattribute__(name)
         if hasattr(attr, "__call__"):
             def log_func(*args,**kwargs):
-                logger("called {} with {} and {}".format(name,args,kwargs))
+                logger.debug("called {} with {} and {}".format(name,args,kwargs))
                 ret = attr(*args,**kwargs)
                 return ret
             return log_func
@@ -27,9 +27,7 @@ class ElementParser:
         driver.open_link(element)
         time.sleep(2)
         self.parse(driver, element)
-        traversable_children = [c for c in element.childern if c.type in ["Course","Folder"]]
-        pdf = [c for c in element.childern if c.type == "File"]
-        
+        traversable_children = [c for c in element.childern if c.type in ["Course","Folder"]]  
         for ch in traversable_children:
             self.start(driver, ch)
         driver.close_link(element)

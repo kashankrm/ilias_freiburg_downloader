@@ -12,6 +12,18 @@ class CustomDriver:
         self.active_handles = {}
         self.current_handle = None
         self.handle_stack = []
+
+    def __getattribute__(self, name):
+        from loguru import logger
+        attr = super().__getattribute__(name)
+        if hasattr(attr, "__call__"):
+            def log_func(*args,**kwargs):
+                logger.debug("called {} with {} and {}".format(name,args,kwargs))
+                ret = attr(*args,**kwargs)
+                return ret
+            return log_func
+        else:
+            return attr
     def __getattr__(self, name):
         
         attr = self.node.__getattribute__(name)

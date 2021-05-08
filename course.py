@@ -3,9 +3,18 @@ class Course:
     def __init__(self,elem):
         self.course_obj = elem
         self.course_element = CourseElement(elem.find_element_by_xpath("div"))
-        
-    def click(self):
-        self.course_element.click()
+    def __getattribute__(self, name):
+        from loguru import logger
+        attr = super().__getattribute__(name)
+        if hasattr(attr, "__call__"):
+            def log_func(*args,**kwargs):
+                logger.debug("called {} with {} and {}".format(name,args,kwargs))
+                ret = attr(*args,**kwargs)
+                return ret
+            return log_func
+        else:
+            return attr
+
     def __getattr__(self, name):
         return self.course_element.__getattribute__(name)
         

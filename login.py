@@ -10,6 +10,7 @@ from course import Course
 from webelement import CustomDriver
 from custom_parser import ElementParser
 from downloader import Downloader
+from file_manager import FileManager
 
 if os.path.exists("config.json"):
 
@@ -33,21 +34,31 @@ class Login:
 
         self.config = {}
 
-        self.config["interested_course"] = "Electronic Markets 2021"
+        self.config["interested_course"] = "Deep Learning Lab SS 2021"
 
         self.retries = 10
+        self.fm = FileManager()
 
 
-        prox = Proxy()
-        prox.proxy_type = ProxyType.MANUAL
-        prox.http_proxy = "localhost:8081"
+        # prox = Proxy()
+        # prox.proxy_type = ProxyType.MANUAL
+        # prox.http_proxy = "localhost:8081"
 
         capabilities = webdriver.DesiredCapabilities.FIREFOX
-        capabilities['marionette'] = True
-        prox.add_to_capabilities(capabilities)
+        # capabilities['marionette'] = True
+        # prox.add_to_capabilities(capabilities)
 
         self.driver = CustomDriver(webdriver.Firefox(executable_path=self.gecko_path,desired_capabilities=capabilities),self.retries)
-        
+        def __getattribute__(self, name):
+            attr = super().__getattribute__(name)
+            if hasattr(attr, "__call__"):
+                def log_func(*args,**kwargs):
+                    logger.debug("called {} with {} and {}".format(name,args,kwargs))
+                    ret = attr(*args,**kwargs)
+                    return ret
+                return log_func
+            else:
+                return attr
     def start(self):
         logger.debug("starting...")
         self.load_passwd()
@@ -79,8 +90,7 @@ class Login:
 
         time.sleep(2)
 
-    def setup_downloader(self):
-        self.driver.downloader = Downloader(self.driver.get_cookies())
+    
     def find_login_btn(self):
         try:
             
@@ -109,17 +119,17 @@ class Login:
         logger.debug("\n".join([c.name for c in self.course_list]))
         
         
-    @logger.catch
+    
     def parse(self):
         parser = ElementParser()
         interested_course = next(c for c in self.course_list if c.name == self.config["interested_course"])
         
         parser.start(self.driver,interested_course.course_element)
         print(repr(interested_course.course_element))
-
+        self.fm.add_course_list(self.course_list)
+        self.fm.download_files(self.driver, self.config["interested_course"])
         
         print("done")
-
 
     def get_element(self, xpath):
         return self.driver.find_element_by_xpath(xpath)
@@ -151,7 +161,6 @@ if __name__ == "__main__":
 
     login = Login()
     login.start()
-    login.setup_downloader()
     login.load_courses()
     login.parse()
 
