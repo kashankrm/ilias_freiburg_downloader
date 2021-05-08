@@ -1,11 +1,15 @@
 from selenium import webdriver
+from selenium.webdriver.common.proxy import Proxy, ProxyType
 import warnings
 import json
 import time
 import os
+from loguru import logger
 
 from course import Course
 from webelement import CustomDriver
+from custom_parser import ElementParser
+from downloader import Downloader
 
 if os.path.exists("config.json"):
 
@@ -33,15 +37,25 @@ class Login:
 
         self.retries = 10
 
-        self.driver = CustomDriver(webdriver.Firefox(executable_path=self.gecko_path),self.retries)
+
+        prox = Proxy()
+        prox.proxy_type = ProxyType.MANUAL
+        prox.http_proxy = "localhost:8081"
+
+        capabilities = webdriver.DesiredCapabilities.FIREFOX
+        capabilities['marionette'] = True
+        prox.add_to_capabilities(capabilities)
+
+        self.driver = CustomDriver(webdriver.Firefox(executable_path=self.gecko_path,desired_capabilities=capabilities),self.retries)
         
     def start(self):
-
+        logger.debug("starting...")
         self.load_passwd()
-
+        logger.debug("credentials loaded")
         self.driver.get(self.ilias_link)
-
+        logger.debug("webpage loaded")
         self.authenticate()
+        logger.debug("authentication complete")
         return
         
 
@@ -65,7 +79,8 @@ class Login:
 
         time.sleep(2)
 
-
+    def setup_downloader(self):
+        self.driver.downloader = Downloader(self.driver.get_cookies())
     def find_login_btn(self):
         try:
             
@@ -74,7 +89,7 @@ class Login:
             return a_tags[0]
             
         except:
-            warnings.warn("could not find xpath of login button, trying search in a tags")
+            warnings.warn("could not find login button, trying xpath")
             login_btn = self.get_element("/html/body/div[4]/div/div/div[4]/div/div/div/div[2]/div[2]/div[1]/div/div[2]/div/form/div[2]/div/p/a")
             return login_btn
     def load_courses(self):
@@ -89,16 +104,21 @@ class Login:
 
                 self.course_list.append(Course(course))
 
-        print([c.course_name for c in self.course_list])
+        print([c.name for c in self.course_list])
+        logger.debug("course loaded")
+        logger.debug("\n".join([c.name for c in self.course_list]))
+        
+        
+    @logger.catch
+    def parse(self):
+        parser = ElementParser()
+        interested_course = next(c for c in self.course_list if c.name == self.config["interested_course"])
+        
+        parser.start(self.driver,interested_course.course_element)
+        print(repr(interested_course.course_element))
+
         
         print("done")
-        # course_list_tags = [a for a in a_tags if a.get_attribute("class") == "il_ContainerItemTitle"]
-
-        # course_list = []
-
-        # for a in course_list_tags:
-
-        #     course_list.append(Course(a))
 
 
     def get_element(self, xpath):
@@ -131,7 +151,9 @@ if __name__ == "__main__":
 
     login = Login()
     login.start()
+    login.setup_downloader()
     login.load_courses()
+    login.parse()
 
 config["interested_course"] = "Electronic Markets 2021"
 

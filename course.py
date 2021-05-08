@@ -1,29 +1,65 @@
-
-
+import json
 class Course:
     def __init__(self,elem):
         self.course_obj = elem
-        self.type = elem.find_element_by_xpath("div/div/div/img").get_attribute("alt")
+        self.course_element = CourseElement(elem.find_element_by_xpath("div"))
+        
+    def click(self):
+        self.course_element.click()
+    def __getattr__(self, name):
+        return self.course_element.__getattribute__(name)
+        
+class CourseElement:
+    def __init__(self, root, parent=None):
+        self.parent = parent
+        self.root = root
+        elem = root
+        self.childern = []
+        self.parsed = False
+        self.type = elem.find_element_by_xpath("div/div[1]/img").get_attribute("alt")
         try:
-            self.link = elem.find_element_by_xpath("div/div/div[2]/div/div[1]/h4/a")
-            self.course_name = self.link.get_attribute("innerHTML")
+            self.link = elem.find_element_by_xpath("div/div[2]/div/div[1]/h4/a").get_attribute("href")
+            self.name = elem.find_element_by_xpath("div/div[2]/div/div[1]/h4/a").get_attribute("innerHTML")
         except:
             self.link = ""
-            self.course_name = elem.find_element_by_xpath("div/div/div[2]/div/div[1]/h4").get_attribute("innerHTML")
+            self.name = elem.find_element_by_xpath("div/div[2]/div/div[1]/h4").get_attribute("innerHTML")
 
         try:
-            self.description = elem.find_element_by_xpath("div/div/div[2]/div/div[4]").get_attribute("innerHTML")
+            self.description = elem.find_element_by_xpath("div/div[2]/div/div[4]").get_attribute("innerHTML")
         except:
             self.description = ""
         try:
-            self.availability = elem.find_element_by_xpath("div/div/div[2]/div/div[5]/span[2]").get_attribute("innerHTML")
+            self.availability = elem.find_element_by_xpath("div/div[2]/div/div[5]/span[2]").get_attribute("innerHTML")
         except:
             self.availability = ""
         try:
-            self.period_of_event = elem.find_element_by_xpath("div/div/div[2]/div/div[5]/span[1]").get_attribute("innerHTML")
+            self.period_of_event = elem.find_element_by_xpath("div/div[2]/div/div[5]/span[1]").get_attribute("innerHTML")
         except:
             self.period_of_event = ""
-    def click(self):
-        self.link.click()
+    def __str__(self):
+        return self.name + "/#/" +self.type
+    def __repr__(self):
+        obj = {}
+        obj["name"] = self.name
+        obj["type"] = self.type
+        obj["link"] = self.link
+        obj["desc"] = self.description
+        obj["aval"] = self.availability
+        obj["poev"] = self.period_of_event
+        obj["childern"] = [repr(o) for o in self.childern]
+        obj["parent"] = self.parent.name if self.parent is not None else "None"
+        return json.dumps(obj)
+    def add_childern(self, child):
+         self.childern.append(CourseElement(child,self))
+
+    def get_structure(self):
+        structure = {}
+        children_structure = []
+        for ch in self.childern:
+            children_structure.append(ch.get_structure())
+        structure[self.name] = children_structure
+        return structure
+    def get_parent_string(self):
+        return  self.parent.get_parent_string() + "/@/" + self.name if self.parent is not None else self.name
+
         
-    
