@@ -18,13 +18,16 @@ class Downloader:
             return log_func
         else:
             return attr
+        
     def add_cookie(self,cookie):
         self.session.cookies.set(cookie["name"], cookie['value'])
         self.cookies[cookie["name"]] = cookie['value']
+
     def update_cookies(self,cookies):
         for cookie in cookies:
             if self.cookies[cookies['name']] is None:
                 self.add_cookie(cookie)
+                
     def download(self, link):
         parent_dirs = link.get_parent_string().split("/@/")
         download_folder = os.path.join(self.root_path,"/".join(parent_dirs[:-1]))
