@@ -2,3 +2,5 @@
 passwd.json
 geckodriver.log
 __pycache__
+mitmdump.log
+downloaded_files/*

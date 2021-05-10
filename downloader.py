@@ -4,7 +4,7 @@ import os
 
 class Downloader:
     def __init__(self):
-        self.root_path = os.getcwd()
+        self.root_path = os.path.join(os.getcwd(),"downloaded_files")
         self.session = requests.Session()
         self.cookies = {}
     def __getattribute__(self, name):
