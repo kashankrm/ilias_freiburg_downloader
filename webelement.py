@@ -2,6 +2,7 @@ import time
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
 import warnings
 from loguru import logger
 
@@ -57,6 +58,23 @@ class CustomDriver:
             except:
                 tried += 1
                 time.sleep(1)
+        raise Exception('could not find element in {} tries'.format(self.retries))
+    def find_elements_by_tag_name(self,tagname):
+
+        tried = 0
+
+        while tried < self.retries:
+
+            try:
+
+                elems = self.node.find_elements_by_tag_name(tagname)
+                if len(elems) == 0:
+                    raise RuntimeError("no elements found!")
+                return elems
+
+            except:
+                tried += 1
+                time.sleep(tried)
         raise Exception('could not find element in {} tries'.format(self.retries))
     def find_element_by_xpath(self,xpath):
 
