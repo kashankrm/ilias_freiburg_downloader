@@ -11,6 +11,7 @@ from webelement import CustomDriver
 from custom_parser import ElementParser
 from downloader import Downloader
 from file_manager import FileManager
+import sys
 
 if os.path.exists("config.json"):
 
@@ -34,10 +35,12 @@ class Login:
 
         self.config = {}
 
-        self.config["interested_course"] = "Deep Learning Lab SS 2021"
+        self.config["interested_course"] = "Competitive Programming"
 
         self.retries = 10
         self.fm = FileManager()
+        logger.remove()
+        logger.add(sys.stderr, level="INFO")
 
 
         # prox = Proxy()
@@ -163,23 +166,3 @@ if __name__ == "__main__":
     login.start()
     login.load_courses()
     login.parse()
-
-config["interested_course"] = "Electronic Markets 2021"
-
-
-
-a_tags = driver.find_elements_by_tag_name("a")
-
-course_list = [a for a in a_tags if a.get_attribute("class") == "il_ContainerItemTitle"]
-
-course_name = [a.get_attribute('innerHTML') for a in course_list]
-
-config["available_courses"] = course_name
-update_config(config)
-
-interested_course = config["interested_course"]
-
-username_field.get_property(name)
-
-print("done")
-
