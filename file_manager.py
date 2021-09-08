@@ -6,7 +6,7 @@ import os
 class FileManager:
     def __init__(self):
         self.course_dict = {}
-        self.downloader = MultiPartDownloader()
+        self.downloader = Downloader()
         self.local_db_name = "local_files.json"
         self.local_db = []
         self.load_local_db()
@@ -30,7 +30,7 @@ class FileManager:
     def get_all_files(self, course_name):
         def get_all_files_recsive(course_element ):
             childern = course_element.childern
-            files = [ch for ch in childern if ch.type in ["File","Interactive Video"]]
+            files = [ch for ch in childern if ch.type in ["File","Interactive Video","Learning Module File"]]
             childern_files = [child  for ch in childern for child in get_all_files_recsive(ch)]
             return files + childern_files
         course = self.course_dict[course_name]
@@ -58,39 +58,40 @@ class FileManager:
     def _download(self,driver,f):
         with self.download_lock:
             self.downloader.update_cookies(driver.get_cookies())
-            already_downloaded = f.get_parent_string() not in self.local_db
-        if already_downloaded:
+            already_downloaded = f.get_parent_string() in self.local_db
+        if not already_downloaded:
             self.downloader.download(f)
+            with self.download_lock:
+                self.local_db.append(f.get_parent_string())
+            self.update_local_db()
         else:
             logger.info("skipping file {} because it exists in db".format(f.name))
-        with self.download_lock:
-            self.local_db.append(f.get_parent_string())
-            self.update_local_db()
+        
     def download_files(self, driver, course_name):
         def worker(f):
             self._download(driver,f)
         with self.downloader as _:
             files = self.get_all_files(course_name)
-            for f in files:
-                self._download(driver,f)
-            # threads = []
             # for f in files:
-            #     t = Thread(target=worker,args=(f,))
-            #     t.start()
-            #     threads.append(t)
-            #     if len(threads) >= self.max_download_threads:
-            #         thds=[]
-            #         for t in threads:
-            #             if t.is_alive():
-            #                 thds.append(t)
-            #         if len(thds)>= self.max_download_threads:
-            #             threads[0].join()
+            #         self._download(driver,f)
+            threads = []
+            for f in files:
+                t = Thread(target=worker,args=(f,))
+                t.start()
+                threads.append(t)
+                if len(threads) >= self.max_download_threads:
+                    thds=[]
+                    for t in threads:
+                        if t.is_alive():
+                            thds.append(t)
+                    if len(thds)>= self.max_download_threads:
+                        threads[0].join()
 
-            #         else:
-            #             threads = thds
+                    else:
+                        threads = thds
                     
                     
-            #     # self._download(driver,f)
-            # for t in threads:
-            #     t.join()
+                # self._download(driver,f)
+            for t in threads:
+                t.join()
         

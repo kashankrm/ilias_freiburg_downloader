@@ -35,9 +35,9 @@ class Login:
 
         self.config = {}
 
-        self.config["interested_course"] = "Competitive Programming"
+        self.config["interested_course"] = "Maschinelles Lernen in den Lebenswissenschaften / Machine Learning in Life Science (-)"
 
-        self.retries = 10
+        self.retries = 100
         self.fm = FileManager()
         logger.remove()
         logger.add(sys.stderr, level="INFO")
@@ -125,7 +125,7 @@ class Login:
     
     def parse(self):
         parser = ElementParser()
-        interested_course = next(c for c in self.course_list if c.name == self.config["interested_course"])
+        interested_course = next(c for c in self.course_list if self.config["interested_course"] in c.name)
         
         parser.start(self.driver,interested_course.course_element)
         print(repr(interested_course.course_element))

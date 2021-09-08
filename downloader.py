@@ -49,6 +49,8 @@ class Downloader:
             mime = mime.split(";")[0]
         if mime == "text/plain":
             return ".txt"
+        elif mime == 'application/x-ipynb+json':
+            return ".ipynb"
         else:
             return mimetypes.guess_extension(mime)
 
@@ -103,9 +105,10 @@ class Downloader:
             print("error we have a problem!!")
 
 class MultiPartDownloader(Downloader):
-    def __init__(self,num_worker=8) -> None:
+    def __init__(self,num_worker=8,progress_bar=True) -> None:
         super().__init__()
         self.num_worker = num_worker
+        self.progress_bar = progress_bar
         
     def __enter__(self):
         print("enter start")
@@ -183,13 +186,18 @@ class MultiPartDownloader(Downloader):
         t = Thread(target=worker)
         t.start()
         self.workers.append(t)
-    
+    def print_progress(self,name,progress):
+        if self.progress_bar:
+            
+            print("[{}] Progress {:2.1%}".format(name,progress), end="\r")
+        
     def get_job_status(self, jobs):
         with self.jobs_lock:
             res = [self.jobs[j].get("result") for j in jobs]
-        done = all([j is not None for j in res])
+        done_arr = [j is not None for j in res]
+        done = all(done_arr)
         successful = all([j for j in res]) if done else False
-        return done,successful
+        return done,successful,sum(done_arr)/len(done_arr)
     
     def download(self,link):
         try:
@@ -198,7 +206,12 @@ class MultiPartDownloader(Downloader):
             logger.error("exception occured when getting head "+str(e))
             return
 
-        content_size = int(headers.headers._store.get("content-length")[1])
+        content_size = int(headers.headers._store.get("content-length",(0,448))[1])
+        try:
+            multi_part_support = headers.headers._store.get("accept-ranges")
+            multi_part_support = False
+        except:
+            multi_part_support = False
         content_type = headers.headers._store.get("content-type")[1]
         file_ext = self.get_file_extension(content_type)
         logger.info("downloading file {} size {} type {}".format(link.name,content_size,content_type))
@@ -210,6 +223,10 @@ class MultiPartDownloader(Downloader):
         if not os.path.exists(download_folder):
             os.makedirs(download_folder)
         file_path = os.path.join(download_folder,file_name)
+        if multi_part_support == False:
+            # print("multipart downloading not supported")
+            self._download_reliable(file_path,link,content_size)
+            return
 
         
         all_jobs = []
@@ -237,10 +254,10 @@ class MultiPartDownloader(Downloader):
                 self.jobs[job_no] = job
             self.jobs_queue.put(copy.deepcopy(job))
             all_jobs.append(job_no)
-            logger.info("creating job to download {}".format(part_size))
         done = self.get_job_status(all_jobs)[0]
         while not done:
-            done = self.get_job_status(all_jobs)[0]
+            done,_,progress = self.get_job_status(all_jobs)
+            self.print_progress(link.name,progress)
             time.sleep(2)
         success = self.get_job_status(all_jobs)[1]
         if not success:
@@ -265,10 +282,21 @@ class MultiPartDownloader(Downloader):
         
         
     def __exit__(self, exc_type, exc_val, exc_tb):
-        print("yay exit called")
         
         with self.exit_lock:
             self.exit_flag = True
         for t in self.workers:
             t.join()
         self.tmp_dir.cleanup()
+if __name__ == "__main__":
+    class DummyLink:
+        def __init__(self) -> None:
+            self.link = r"https://www.dundeecity.gov.uk/sites/default/files/publications/civic_renewal_forms.zip"
+            self.name = "dummy"
+        def get_parent_string(self):
+            return "a/@/c"
+    mpd = MultiPartDownloader()
+    link = DummyLink()
+    # setattr(link,"link", r"https://www.dundeecity.gov.uk/sites/default/files/publications/civic_renewal_forms.zip")
+    with mpd as md:
+        mpd.download(link)

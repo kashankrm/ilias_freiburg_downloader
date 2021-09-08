@@ -58,6 +58,9 @@ class ElementParser:
             self.parse_video_link(driver,vl)
 
         for ch in traversable_children:
-            self.start(driver, ch)
+            if "Lectures" in ch.name or "05_b"  in ch.name:
+                self.start(driver, ch)
+            else:
+                self.start(driver, ch)
         driver.close_link(element)
         time.sleep(2)
