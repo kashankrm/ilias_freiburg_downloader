@@ -21,20 +21,22 @@ class Course:
 class CourseElement:
     def __init__(self, root, parent=None):
         self.parent = parent
-        self.root = root
-        elem = root
+        elem = root.find_element_by_class_name("media-body")
+        self.root = elem
+        
         self.childern = []
         self.parsed = False
-        self.type = elem.find_element_by_xpath("div/div[1]/img").get_attribute("alt")
+        self.type = root.find_element_by_tag_name("img").get_attribute("alt")
         try:
-            self.link = elem.find_element_by_xpath("div/div[2]/div/div[1]/h4/a").get_attribute("href")
-            self.name = elem.find_element_by_xpath("div/div[2]/div/div[1]/h4/a").get_attribute("innerHTML")
+            link_div = elem.find_element_by_class_name("il-item-title")
+            self.link = link_div.find_element_by_xpath("a").get_attribute("href")
+            self.name = link_div.find_element_by_xpath("a").get_attribute("innerHTML")
         except:
             self.link = ""
-            self.name = elem.find_element_by_xpath("div/div[2]/div/div[1]/h4").get_attribute("innerHTML")
+            self.name = elem.find_element_by_class_name("il-item-title").get_attribute("innerHTML")
 
         try:
-            self.description = elem.find_element_by_xpath("div/div[2]/div/div[4]").get_attribute("innerHTML")
+            self.description =  elem.find_element_by_class_name("il-item-description")
         except:
             self.description = ""
         try:

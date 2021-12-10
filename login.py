@@ -37,7 +37,7 @@ class Login:
 
         self.config["interested_course"] = "Maschinelles Lernen in den Lebenswissenschaften / Machine Learning in Life Science (-)"
 
-        self.retries = 100
+        self.retries = 10
         self.fm = FileManager()
         logger.remove()
         logger.add(sys.stderr, level="INFO")
@@ -105,15 +105,31 @@ class Login:
             warnings.warn("could not find login button, trying xpath")
             login_btn = self.get_element("/html/body/div[4]/div/div/div[4]/div/div/div/div[2]/div[2]/div[1]/div/div[2]/div/form/div[2]/div/p/a")
             return login_btn
+    def click_my_courses(self):
+        atags = self.driver.find_elements_by_tag_name("a")
+        
+
+        for at in atags:
+            childern = self.driver.get_childern(at)
+            for ch in childern:
+                if ch.tag_name == "span" and  "My Courses and Groups" in ch.get_attribute("innerHTML"):
+                    at.click()
+                    return
+
     def load_courses(self):
 
-        course_list_obj = self.get_elements("/html/body/div[3]/div/div/div[5]/div/div/div/div[3]/div[3]/div/div[1]/div/div/*")
+         
+        
+        self.click_my_courses()   
+        course_list_obj = self.driver.find_elements_by_class_name("il-std-item-container")
+            
+        # self.get_elements("/html/body/div[3]/div/div/div[5]/div/div/div/div[3]/div[3]/div/div[1]/div/div/*")
 
         self.course_list = []
 
         for course in course_list_obj:
 
-            if course.get_attribute("class") == "ilObjListRow":
+            if course.get_attribute("class") == "il-std-item-container":
 
                 self.course_list.append(Course(course))
 

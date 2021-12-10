@@ -14,17 +14,17 @@ class CustomDriver:
         self.current_handle = None
         self.handle_stack = []
 
-    def __getattribute__(self, name):
-        from loguru import logger
-        attr = super().__getattribute__(name)
-        if hasattr(attr, "__call__"):
-            def log_func(*args,**kwargs):
-                logger.debug("called {} with {} and {}".format(name,args,kwargs))
-                ret = attr(*args,**kwargs)
-                return ret
-            return log_func
-        else:
-            return attr
+    # def __getattribute__(self, name):
+    #     from loguru import logger
+    #     attr = super().__getattribute__(name)
+    #     if hasattr(attr, "__call__"):
+    #         def log_func(*args,**kwargs):
+    #             logger.debug("called {} with {} and {}".format(name,args,kwargs))
+    #             ret = attr(*args,**kwargs)
+    #             return ret
+    #         return log_func
+    #     else:
+    #         return attr
     def __getattr__(self, name):
         
         attr = self.node.__getattribute__(name)
@@ -76,6 +76,8 @@ class CustomDriver:
                 tried += 1
                 time.sleep(tried)
         raise Exception('could not find element in {} tries'.format(self.retries))
+    def get_childern(self,elem):
+        return elem.find_elements_by_xpath(".//*")
     def find_element_by_xpath(self,xpath):
 
         tried = 0
