@@ -20,33 +20,61 @@ class Course:
         
 class CourseElement:
     def __init__(self, root, parent=None):
-        self.parent = parent
-        elem = root.find_element_by_class_name("media-body")
-        self.root = elem
-        
-        self.childern = []
-        self.parsed = False
-        self.type = root.find_element_by_tag_name("img").get_attribute("alt")
-        try:
-            link_div = elem.find_element_by_class_name("il-item-title")
-            self.link = link_div.find_element_by_xpath("a").get_attribute("href")
-            self.name = link_div.find_element_by_xpath("a").get_attribute("innerHTML")
-        except:
-            self.link = ""
-            self.name = elem.find_element_by_class_name("il-item-title").get_attribute("innerHTML")
+        if parent is None:
+            self.parent = parent
+            elem = root.find_element_by_class_name("media-body")
+            self.root = elem
+            
+            self.childern = []
+            self.parsed = False
+            self.type = root.find_element_by_tag_name("img").get_attribute("alt")
+            try:
+                link_div = elem.find_element_by_class_name("il-item-title")
+                self.link = link_div.find_element_by_xpath("a").get_attribute("href")
+                self.name = link_div.find_element_by_xpath("a").get_attribute("innerHTML")
+            except:
+                self.link = ""
+                self.name = elem.find_element_by_class_name("il-item-title").get_attribute("innerHTML")
 
-        try:
-            self.description =  elem.find_element_by_class_name("il-item-description")
-        except:
-            self.description = ""
-        try:
-            self.availability = elem.find_element_by_xpath("div/div[2]/div/div[5]/span[2]").get_attribute("innerHTML")
-        except:
-            self.availability = ""
-        try:
-            self.period_of_event = elem.find_element_by_xpath("div/div[2]/div/div[5]/span[1]").get_attribute("innerHTML")
-        except:
-            self.period_of_event = ""
+            try:
+                self.description =  elem.find_element_by_class_name("il-item-description")
+            except:
+                self.description = ""
+            try:
+                self.availability = elem.find_element_by_xpath("div/div[2]/div/div[5]/span[2]").get_attribute("innerHTML")
+            except:
+                self.availability = ""
+            try:
+                self.period_of_event = elem.find_element_by_xpath("div/div[2]/div/div[5]/span[1]").get_attribute("innerHTML")
+            except:
+                self.period_of_event = ""
+        else:
+            self.parent = parent
+            self.root = root
+            elem = root
+            self.childern = []
+            self.parsed = False
+            self.type = elem.find_element_by_xpath("div/div[1]/img").get_attribute("alt")
+            try:
+                a_tag = elem.find_elements_by_tag_name("a")[0]
+                self.link = a_tag.get_attribute("href")
+                self.name = a_tag.get_attribute("innerHTML")
+            except:
+                self.link = ""
+                self.name = elem.find_element_by_xpath("div/div[2]/div/div[1]/h4").get_attribute("innerHTML")
+
+            try:
+                self.description = elem.find_element_by_xpath("div/div[2]/div/div[4]").get_attribute("innerHTML")
+            except:
+                self.description = ""
+            try:
+                self.availability = elem.find_element_by_xpath("div/div[2]/div/div[5]/span[2]").get_attribute("innerHTML")
+            except:
+                self.availability = ""
+            try:
+                self.period_of_event = elem.find_element_by_xpath("div/div[2]/div/div[5]/span[1]").get_attribute("innerHTML")
+            except:
+                self.period_of_event = ""
     def __str__(self):
         return self.name + "/#/" +self.type
     def __repr__(self):
