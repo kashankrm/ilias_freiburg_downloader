@@ -98,7 +98,7 @@ class Login:
         try:
             
             a_tags = self.driver.find_elements_by_tag_name("a")
-            a_tags = [a for a in a_tags if "shib_login.php?target=" in a.get_attribute("href")  ]
+            a_tags = [a for a in a_tags if a.get_attribute("href") is not None and "shib_login.php?target=" in a.get_attribute("href")  ]
             return a_tags[0]
             
         except:
